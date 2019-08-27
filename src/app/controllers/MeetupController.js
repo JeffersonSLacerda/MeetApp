@@ -28,6 +28,38 @@ class MeetupController {
     return res.json(meetups);
   }
 
+  // async store(req, res) {
+  //   const schema = Yup.object().shape({
+  //     title: Yup.string().required(),
+  //     file_id: Yup.number().required(),
+  //     description: Yup.string().required(),
+  //     location: Yup.string().required(),
+  //     date: Yup.date().required(),
+  //   });
+
+  //   if (!(await schema.isValid(req.body)))
+  //     return res.status(400).json({ error: 'Validation Fails' });
+
+  //   /**
+  //    * Check for past dates
+  //    */
+  //   const { date, file_id } = req.body;
+  //   const parseDate = parseISO(date);
+
+  //   if (isBefore(parseDate, new Date()))
+  //     return res.status(400).json({ error: "Past dates aren't permited" });
+
+  //   const user_id = req.userId;
+
+  //   const meetup = await Meetup.create({
+  //     ...req.body,
+  //     file_id,
+  //     user_id,
+  //   });
+
+  //   return res.json(meetup);
+  // }
+
   async store(req, res) {
     const schema = Yup.object().shape({
       title: Yup.string().required(),
@@ -37,17 +69,13 @@ class MeetupController {
       date: Yup.date().required(),
     });
 
-    if (!(await schema.isValid(req.body)))
-      return res.status(400).json({ error: 'Validation Fails' });
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails' });
+    }
 
-    /**
-     * Check for past dates
-     */
-    const { date } = req.body;
-    const parseDate = parseISO(date);
-
-    if (isBefore(parseDate, new Date()))
-      return res.status(400).json({ error: "Past dates aren't permited" });
+    if (isBefore(parseISO(req.body.date), new Date())) {
+      return res.status(400).json({ error: 'Meetup date invalid' });
+    }
 
     const user_id = req.userId;
 
