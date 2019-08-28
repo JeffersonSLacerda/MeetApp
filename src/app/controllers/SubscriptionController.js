@@ -1,10 +1,38 @@
+import { Op } from 'sequelize';
 import User from '../models/User';
 import Meetup from '../models/Meetup';
 import Subscription from '../models/Subscription';
 
 class SubscriptionController {
   async index(req, res) {
-    return res.json();
+    const subscriptions = await Subscription.findAll({
+      where: {
+        user_id: req.userId,
+      },
+      attributes: ['id', 'canceled_at', 'meetup_id'],
+      include: [
+        {
+          model: Meetup,
+          where: {
+            date: {
+              [Op.gt]: new Date(),
+            },
+          },
+          attributes: [
+            'past',
+            'id',
+            'title',
+            'description',
+            'location',
+            'date',
+            'canceled_at',
+          ],
+          required: true,
+        },
+      ],
+      oder: [[Meetup, 'date']],
+    });
+    return res.json(subscriptions);
   }
 
   async store(req, res) {
@@ -12,8 +40,6 @@ class SubscriptionController {
     const meetup = await Meetup.findByPk(req.params.meetupId, {
       include: [User],
     });
-
-    const newSub = meetup.total_subs;
 
     if (meetup.user_id === req.userId)
       return res
@@ -38,8 +64,6 @@ class SubscriptionController {
       ],
     });
 
-    return res.json(checkDate);
-
     if (checkDate)
       return res.status(400).json({
         error: "You can't subscribe in more one meetup at the same time",
@@ -48,10 +72,23 @@ class SubscriptionController {
     const subscription = await Subscription.create({
       user_id: user.id,
       meetup_id: meetup.id,
-      newSub: newSub + 1,
     });
 
-    console.log(newSub);
+    const numberOfSubs = await Subscription.findAndCountAll({
+      where: {
+        meetup_id: meetup.id,
+      },
+      include: [
+        {
+          model: User,
+          attributes: ['name', 'email'],
+        },
+      ],
+    });
+    console.log(numberOfSubs.count);
+
+    await meetup.update({ total_subs: numberOfSubs.count });
+
     return res.json(subscription);
   }
 }
