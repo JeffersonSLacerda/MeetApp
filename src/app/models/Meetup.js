@@ -9,6 +9,7 @@ class Meetup extends Model {
         description: Sequelize.STRING,
         location: Sequelize.STRING,
         date: Sequelize.DATE,
+        total_subs: Sequelize.NUMBER,
         canceled_at: { type: Sequelize.DATE, allowNull: true },
         past: {
           type: Sequelize.VIRTUAL,

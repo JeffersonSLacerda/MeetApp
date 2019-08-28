@@ -21,7 +21,15 @@ class MeetupController {
 
     const meetups = await Meetup.findAll({
       where,
-      attributes: ['past', 'id', 'title', 'description', 'date', 'file_id'],
+      attributes: [
+        'past',
+        'id',
+        'title',
+        'description',
+        'date',
+        'file_id',
+        'total_subs',
+      ],
       include: [
         {
           model: User,
