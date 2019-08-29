@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import User from '../models/User';
 import Meetup from '../models/Meetup';
 import Subscription from '../models/Subscription';
+import { subHours, isBefore } from 'date-fns';
 
 class SubscriptionController {
   async index(req, res) {
@@ -77,6 +78,7 @@ class SubscriptionController {
     const numberOfSubs = await Subscription.findAndCountAll({
       where: {
         meetup_id: meetup.id,
+        canceled_at: null,
       },
       include: [
         {
@@ -90,6 +92,80 @@ class SubscriptionController {
     await meetup.update({ total_subs: numberOfSubs.count });
 
     return res.json(subscription);
+
+    /**
+     * enviar email -> User
+     */
+  }
+
+  async delete(req, res) {
+    const subscription = await Subscription.findByPk(
+      req.params.subscriptionId,
+      {
+        include: [
+          {
+            model: Meetup,
+            attributes: ['title', 'date'],
+          },
+          {
+            model: User,
+            attributes: ['name', 'email'],
+          },
+        ],
+      }
+    );
+
+    // return res.json({ subscription });
+
+    if (subscription.user_id !== req.userId)
+      return res
+        .status(401)
+        .json({ error: "You don't have permission to cancel it" });
+
+    const meetup = await Meetup.findOne({
+      where: {
+        id: subscription.meetup_id,
+      },
+    });
+
+    if (isBefore(meetup.date, new Date()))
+      return res
+        .status(400)
+        .json({ error: "You can't cancel subscriptions in past Meetups" });
+
+    const dateWithSub = subHours(meetup.date, 2);
+
+    if (!dateWithSub)
+      return res.status(400).json({
+        error: 'You can only cancel appointmensts 2 hours in advance',
+      });
+
+    if (subscription.canceled_at != null) {
+      await subscription.destroy();
+      return res.json({ message: 'Subscription Deleted' });
+    }
+
+    subscription.canceled_at = new Date();
+
+    await subscription.save();
+
+    const numberOfSubs = await Subscription.findAndCountAll({
+      where: {
+        meetup_id: meetup.id,
+        canceled_at: null,
+      },
+      include: [
+        {
+          model: User,
+          attributes: ['name', 'email'],
+        },
+      ],
+    });
+    console.log(numberOfSubs.count);
+
+    await meetup.update({ total_subs: numberOfSubs.count });
+
+    return res.json({ message: 'Subscription canceled' });
   }
 }
 
