@@ -4,6 +4,7 @@ import { starOfDay, endOfDay, isBefore, parseISO, subDays } from 'date-fns';
 
 import Meetup from '../models/Meetup';
 import User from '../models/User';
+import Subscription from '../models/Subscription';
 
 import CreateMeetupMail from '../jobs/CreateMeetupMail';
 import Queue from '../../lib/Queue';
@@ -155,11 +156,25 @@ class MeetupController {
         .status(400)
         .json({ error: 'Yoou can only cancel appointments 7 days in advance' });
 
+    if (meetup.total_subs !== 0) {
+      const subs = await Subscription.findAll({
+        where: {
+          meetup_id: meetup.id,
+          canceled_at: null,
+        },
+        include: {
+          model: User,
+          attributes: ['id', 'name', 'email'],
+        },
+      });
+      return res.json(subs);
+    }
+
     meetup.canceled_at = new Date();
 
-    await meetup.save();
+    // await meetup.save();
 
-    return res.json(meetup);
+    return res.json(subs);
   }
 }
 
