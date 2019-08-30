@@ -83,7 +83,7 @@ class MeetupController {
       },
     });
 
-    console.log(meetupCreated);
+    console.log(meetup);
 
     await Queue.add(CreateMeetupMail.key, {
       meetup,

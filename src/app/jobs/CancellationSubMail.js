@@ -2,9 +2,9 @@ import { format, parseISO } from 'date-fns';
 import pt from 'date-fns/locale/pt';
 import Mail from '../../lib/Mail';
 
-class CancellationSubsMail {
+class CancellationSubMail {
   get key() {
-    return 'CancellationSubsMail';
+    return 'CancellationSubMail';
   }
 
   async handle({ data }) {
@@ -14,7 +14,7 @@ class CancellationSubsMail {
 
     await Mail.sendMail({
       to: `${subscription.User.name} <${subscription.User.email}>`,
-      subject: 'Subscription canceled',
+      subject: 'Inscrição Cancelada',
       template: 'cancellationsub',
       context: {
         user: subscription.User.name,
@@ -32,4 +32,4 @@ class CancellationSubsMail {
   }
 }
 
-export default new CancellationSubsMail();
+export default new CancellationSubMail();

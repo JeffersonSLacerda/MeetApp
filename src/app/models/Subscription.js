@@ -9,7 +9,7 @@ class Subscription extends Model {
           type: Sequelize.DATE,
           allowNull: true,
         },
-        canceleble: {
+        cancelable: {
           type: Sequelize.VIRTUAL,
           get() {
             return isBefore(new Date(), subHours(this.date, 2));

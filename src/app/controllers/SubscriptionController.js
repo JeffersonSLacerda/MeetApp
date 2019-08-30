@@ -79,21 +79,18 @@ class SubscriptionController {
       meetup_id: meetup.id,
     });
 
-    const subscription = await Subscription.findByPk(
-      req.params.subscriptionId,
-      {
-        include: [
-          {
-            model: Meetup,
-            attributes: ['title', 'date', 'location'],
-          },
-          {
-            model: User,
-            attributes: ['name', 'email'],
-          },
-        ],
-      }
-    );
+    const subscription = await Subscription.findByPk(subscriptionCreate.id, {
+      include: [
+        {
+          model: Meetup,
+          attributes: ['title', 'date', 'description', 'location'],
+        },
+        {
+          model: User,
+          attributes: ['name', 'email'],
+        },
+      ],
+    });
 
     await Queue.add(SubscribeMail.key, {
       subscription,

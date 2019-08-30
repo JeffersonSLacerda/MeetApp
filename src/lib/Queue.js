@@ -33,6 +33,7 @@ class Queue {
   }
 
   add(queue, job) {
+    console.log('adicionada');
     return this.queues[queue].bee.createJob(job).save();
   }
 
