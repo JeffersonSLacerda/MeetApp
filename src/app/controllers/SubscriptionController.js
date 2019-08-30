@@ -4,6 +4,10 @@ import Meetup from '../models/Meetup';
 import Subscription from '../models/Subscription';
 import { subHours, isBefore } from 'date-fns';
 
+import CancellationSubMail from '../jobs/CancellationSubMail';
+import SubscribeMail from '../jobs/SubscribeMail';
+import Queue from '../../lib/Queue';
+
 class SubscriptionController {
   async index(req, res) {
     const subscriptions = await Subscription.findAll({
@@ -70,9 +74,29 @@ class SubscriptionController {
         error: "You can't subscribe in more one meetup at the same time",
       });
 
-    const subscription = await Subscription.create({
+    const subscriptionCreate = await Subscription.create({
       user_id: user.id,
       meetup_id: meetup.id,
+    });
+
+    const subscription = await Subscription.findByPk(
+      req.params.subscriptionId,
+      {
+        include: [
+          {
+            model: Meetup,
+            attributes: ['title', 'date', 'location'],
+          },
+          {
+            model: User,
+            attributes: ['name', 'email'],
+          },
+        ],
+      }
+    );
+
+    await Queue.add(SubscribeMail.key, {
+      subscription,
     });
 
     const numberOfSubs = await Subscription.findAndCountAll({
@@ -91,10 +115,10 @@ class SubscriptionController {
 
     await meetup.update({ total_subs: numberOfSubs.count });
 
-    return res.json(subscription);
+    return res.json(subscriptionCreate);
 
     /**
-     * enviar email -> User
+     * send email -> User
      */
   }
 
@@ -105,7 +129,7 @@ class SubscriptionController {
         include: [
           {
             model: Meetup,
-            attributes: ['title', 'date'],
+            attributes: ['title', 'date', 'location'],
           },
           {
             model: User,
@@ -142,12 +166,17 @@ class SubscriptionController {
 
     if (subscription.canceled_at != null) {
       await subscription.destroy();
+
       return res.json({ message: 'Subscription Deleted' });
     }
 
     subscription.canceled_at = new Date();
 
     await subscription.save();
+
+    await Queue.add(CancellationSubMail.key, {
+      subscription,
+    });
 
     const numberOfSubs = await Subscription.findAndCountAll({
       where: {

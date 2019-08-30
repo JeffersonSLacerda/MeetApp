@@ -5,6 +5,9 @@ import { starOfDay, endOfDay, isBefore, parseISO, subDays } from 'date-fns';
 import Meetup from '../models/Meetup';
 import User from '../models/User';
 
+import CreateMeetupMail from '../jobs/CreateMeetupMail';
+import Queue from '../../lib/Queue';
+
 class MeetupController {
   async index(req, res) {
     const where = {};
@@ -68,12 +71,25 @@ class MeetupController {
 
     const user_id = req.userId;
 
-    const meetup = await Meetup.create({
+    const meetupCreated = await Meetup.create({
       ...req.body,
       user_id,
     });
 
-    return res.json(meetup);
+    const meetup = await Meetup.findByPk(meetupCreated.id, {
+      include: {
+        model: User,
+        attributes: ['name', 'email'],
+      },
+    });
+
+    console.log(meetupCreated);
+
+    await Queue.add(CreateMeetupMail.key, {
+      meetup,
+    });
+
+    return res.json(meetupCreated);
   }
 
   async update(req, res) {
@@ -117,14 +133,19 @@ class MeetupController {
   async delete(req, res) {
     const user_id = req.userId;
 
-    const meetup = await Meetup.findByPk(req.params.id);
+    const meetup = await Meetup.findByPk(req.params.id, {
+      include: {
+        model: User,
+        attributes: ['name', 'email'],
+      },
+    });
 
     if (meetup.user_id !== user_id)
       return res.status(401).json({ error: 'Not authorized' });
 
     if (meetup.past || meetup.canceled_at != null) {
       await meetup.destroy();
-      return res.send();
+      return res.json({ message: 'Meetup Deleted' });
     }
 
     const dateWithSub = subDays(meetup.date, 7);
