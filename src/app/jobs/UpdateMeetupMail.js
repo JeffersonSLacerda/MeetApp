@@ -2,21 +2,20 @@ import { format, parseISO } from 'date-fns';
 import pt from 'date-fns/locale/pt';
 import Mail from '../../lib/Mail';
 
-class CancellationMeetupMail {
+class UpdateMeetupMail {
   get key() {
-    return 'CancellationMeetupMail';
+    return 'UpdateMeetupMail';
   }
 
   async handle({ data }) {
     const { meetup } = data;
 
     console.log('A fila executou');
-    console.log(meetup);
 
     await Mail.sendMail({
       to: `${meetup.User.name} <${meetup.User.email}>`,
-      subject: 'Meetup Cancelada',
-      template: 'cancellationmeetup',
+      subject: 'Meetup Atualizada',
+      template: 'updatemeetup',
       context: {
         title: meetup.title,
         description: meetup.description,
@@ -33,4 +32,4 @@ class CancellationMeetupMail {
   }
 }
 
-export default new CancellationMeetupMail();
+export default new UpdateMeetupMail();

@@ -2,6 +2,7 @@ import Bee from 'bee-queue';
 
 import CancellationSubMail from '../app/jobs/CancellationSubMail';
 import CancellationMeetupMail from '../app/jobs/CancellationMeetupMail';
+import UpdateMeetupMail from '../app/jobs/UpdateMeetupMail';
 import CreateMeetupMail from '../app/jobs/CreateMeetupMail';
 import SubscribeMail from '../app/jobs/SubscribeMail';
 
@@ -12,6 +13,7 @@ const jobs = [
   SubscribeMail,
   CancellationMeetupMail,
   CreateMeetupMail,
+  UpdateMeetupMail,
 ];
 
 class Queue {

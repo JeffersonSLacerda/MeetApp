@@ -8,6 +8,8 @@ import Subscription from '../models/Subscription';
 
 import CreateMeetupMail from '../jobs/CreateMeetupMail';
 import Queue from '../../lib/Queue';
+import CancellationMeetupMail from '../jobs/CancellationMeetupMail';
+import UpdateMeetupMail from '../jobs/UpdateMeetupMail';
 
 class MeetupController {
   async index(req, res) {
@@ -108,7 +110,12 @@ class MeetupController {
 
     const user_id = req.userId;
 
-    const meetup = await Meetup.findByPk(req.params.id);
+    const meetup = await Meetup.findByPk(req.params.id, {
+      include: {
+        model: User,
+        attributes: ['name', 'email'],
+      },
+    });
 
     if (meetup.user_id !== user_id)
       return res.status(401).json({ error: 'Not authorized' });
@@ -127,6 +134,10 @@ class MeetupController {
         .json({ error: "You con't update a canceled meetup" });
 
     await meetup.update(req.body);
+
+    await Queue.add(UpdateMeetupMail.key, {
+      meetup,
+    });
 
     return res.json(meetup);
   }
@@ -155,6 +166,15 @@ class MeetupController {
       return res
         .status(400)
         .json({ error: 'Yoou can only cancel appointments 7 days in advance' });
+
+    /**
+     * Send email to create user
+     */
+    await Queue.add(CancellationMeetupMail.key, {
+      meetup,
+    });
+
+    return res.json(meetup);
 
     if (meetup.total_subs !== 0) {
       const subs = await Subscription.findAll({
