@@ -10,6 +10,7 @@ import CreateMeetupMail from '../jobs/CreateMeetupMail';
 import Queue from '../../lib/Queue';
 import CancellationMeetupMail from '../jobs/CancellationMeetupMail';
 import UpdateMeetupMail from '../jobs/UpdateMeetupMail';
+import CancellationMeetupMailToUser from '../jobs/CancellationMeetupMailToUser';
 
 class MeetupController {
   async index(req, res) {
@@ -174,7 +175,7 @@ class MeetupController {
       meetup,
     });
 
-    return res.json(meetup);
+    // return res.json(meetup);
 
     if (meetup.total_subs !== 0) {
       const subs = await Subscription.findAll({
@@ -182,19 +183,44 @@ class MeetupController {
           meetup_id: meetup.id,
           canceled_at: null,
         },
-        include: {
-          model: User,
-          attributes: ['id', 'name', 'email'],
-        },
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'name', 'email'],
+          },
+          {
+            model: Meetup,
+            attributes: [
+              'title',
+              'user_id',
+              'description',
+              'date',
+              'location',
+              'total_subs',
+            ],
+          },
+        ],
       });
-      return res.json(subs);
+
+      if (meetup.total_subs === subs.length) {
+        await Queue.add(CancellationMeetupMailToUser.key, {
+          meetup,
+          subs,
+        });
+        // for (let count = 0; count <= subs.length; count++) {
+        //   const sub = await subs[count];
+        //   // console.log(`Enviado para ${sub.User.name}`);
+        //   console.log(count);
+        // }
+      }
+      // return res.json(subs[0]);
     }
 
     meetup.canceled_at = new Date();
 
     // await meetup.save();
 
-    return res.json(subs);
+    return res.json({ message: 'meetup deletada' });
   }
 }
 

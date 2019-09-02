@@ -5,6 +5,7 @@ import CancellationMeetupMail from '../app/jobs/CancellationMeetupMail';
 import UpdateMeetupMail from '../app/jobs/UpdateMeetupMail';
 import CreateMeetupMail from '../app/jobs/CreateMeetupMail';
 import SubscribeMail from '../app/jobs/SubscribeMail';
+import CancellationMeetupMailToUser from '../app/jobs/CancellationMeetupMailToUser';
 
 import redisConfig from '../config/redis';
 
@@ -14,6 +15,7 @@ const jobs = [
   CancellationMeetupMail,
   CreateMeetupMail,
   UpdateMeetupMail,
+  CancellationMeetupMailToUser,
 ];
 
 class Queue {
