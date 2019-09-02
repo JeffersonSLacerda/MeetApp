@@ -37,8 +37,10 @@ class Queue {
   }
 
   add(queue, job) {
-    console.log('adicionada');
-    return this.queues[queue].bee.createJob(job).save();
+    return this.queues[queue].bee
+      .createJob(job)
+      .timeout(3000)
+      .save();
   }
 
   processQueue() {
