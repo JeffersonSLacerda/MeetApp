@@ -7,8 +7,6 @@ import CreateMeetupMail from '../app/jobs/CreateMeetupMail';
 import SubscribeMail from '../app/jobs/SubscribeMail';
 import CancellationMeetupMailToUser from '../app/jobs/CancellationMeetupMailToUser';
 
-import redisConfig from '../config/redis';
-
 const jobs = [
   CancellationSubMail,
   SubscribeMail,
@@ -29,7 +27,10 @@ class Queue {
     jobs.forEach(({ key, handle }) => {
       this.queues[key] = {
         bee: new Bee(key, {
-          redis: redisConfig,
+          redis: {
+            host: '127.0.0.1',
+            port: 6379,
+          },
         }),
         handle,
       };
