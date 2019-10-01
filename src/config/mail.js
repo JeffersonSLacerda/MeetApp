@@ -1,6 +1,6 @@
 export default {
   host: 'smtp.mailtrap.io',
-  port: 2525,
+  port: 1025,
   rateLimit: 1,
   secure: false,
   auth: {
@@ -10,7 +10,7 @@ export default {
   pool: true,
   rateLimit: true,
   maxConnections: 1,
-  maxMessages: 1,
+  maxMessages: 3,
   default: {
     from: 'Equipe MeetApp <noreply@meetapp.com>',
   },
